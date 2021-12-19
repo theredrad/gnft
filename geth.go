@@ -1,4 +1,4 @@
-package provider
+package gnft
 
 import (
 	"encoding/json"
@@ -8,8 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/theredrad/gnft/standard"
-	"github.com/theredrad/gnft/types"
 	"io"
 	"math/big"
 	"net/http"
@@ -39,59 +37,59 @@ func NewGETH(rawurl string) (*GETH, error) {
 	}, nil
 }
 
-func (c *GETH) NewContract(address common.Address) (*Contract, error) {
-	a, err := abi.JSON(strings.NewReader(standard.ABIERC721))
+func (c *GETH) NewContract(address string) (*Contract, error) {
+	a, err := abi.JSON(strings.NewReader(ABIERC721))
 	if err != nil {
 		return nil, err
 	}
 
 	return &Contract{
-		contract: bind.NewBoundContract(address, a, c.client, c.client, c.client),
+		contract: bind.NewBoundContract(common.HexToAddress(address), a, c.client, c.client, c.client),
 	}, nil
 }
 
-func (c *Contract) BalanceOf(address common.Address) (*big.Int, error) {
+func (c *Contract) BalanceOf(address string) (*big.Int, error) {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) OwnerOf(tokenID *big.Int) (common.Address, error) {
+func (c *Contract) OwnerOf(tokenID *big.Int) (string, error) {
 	var res []interface{}
 	err := c.contract.Call(&bind.CallOpts{}, &res, "ownerOf", tokenID)
 	if err != nil {
-		return common.Address{}, err
+		return "", err
 	}
 
 	adr, err := addressFromResult(res)
 	if err != nil {
-		return common.Address{}, err
+		return "", err
 	}
 	return adr, nil
 }
 
-func (c *Contract) SafeTransferFromWithData(from common.Address, to common.Address, tokenID *big.Int, data []byte) error {
+func (c *Contract) SafeTransferFromWithData(from, to string, tokenID *big.Int, data []byte) error {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) SafeTransferFrom(from common.Address, to common.Address, tokenID *big.Int, data []byte) error {
+func (c *Contract) SafeTransferFrom(from, to string, tokenID *big.Int, data []byte) error {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) TransferFrom(from common.Address, to common.Address, tokenID *big.Int) error {
+func (c *Contract) TransferFrom(from, to string, tokenID *big.Int) error {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) Approved(approved common.Address, tokenID *big.Int) error {
+func (c *Contract) Approved(approved string, tokenID *big.Int) error {
 	panic("not implemented") // TODO
 }
-func (c *Contract) SetApprovalForAll(operator common.Address, approved bool) error {
-	panic("not implemented") // TODO
-}
-
-func (c *Contract) GetApproved(tokenID *big.Int) (common.Address, error) {
+func (c *Contract) SetApprovalForAll(operator string, approved bool) error {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) IsApprovedForAll(owner common.Address, operator common.Address) (bool, error) {
+func (c *Contract) GetApproved(tokenID *big.Int) (string, error) {
+	panic("not implemented") // TODO
+}
+
+func (c *Contract) IsApprovedForAll(owner, operator string) (bool, error) {
 	panic("not implemented") // TODO
 }
 
@@ -103,7 +101,7 @@ func (c *Contract) Symbol() (string, error) {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) TokenURI(tokenID *big.Int) (*types.TokenURI, error) {
+func (c *Contract) TokenURI(tokenID *big.Int) (*TokenURI, error) {
 	var res []interface{}
 	err := c.contract.Call(&bind.CallOpts{}, &res, "tokenURI", tokenID)
 	if err != nil {
@@ -120,7 +118,7 @@ func (c *Contract) TokenURI(tokenID *big.Int) (*types.TokenURI, error) {
 		return nil, err
 	}
 
-	t := types.TokenURI{}
+	t := TokenURI{}
 	err = json.Unmarshal(b, &t)
 	if err != nil {
 		return nil, err
@@ -137,11 +135,11 @@ func (c *Contract) TokenByIndex(index *big.Int) (*big.Int, error) {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) TokenOfOwnerByIndex(owner common.Address, index *big.Int) (*big.Int, error) {
+func (c *Contract) TokenOfOwnerByIndex(owner string, index *big.Int) (*big.Int, error) {
 	panic("not implemented") // TODO
 }
 
-func (c *Contract) OnERC721Received(operator, from common.Address, tokenId *big.Int, data []byte) ([4]byte, error) {
+func (c *Contract) OnERC721Received(operator, from string, tokenId *big.Int, data []byte) ([4]byte, error) {
 	panic("not implemented") // TODO
 }
 
@@ -155,14 +153,14 @@ func stringFromResult(result []interface{}) (string, error) {
 	return "", ErrInvalidResult
 }
 
-func addressFromResult(result []interface{}) (common.Address, error) {
+func addressFromResult(result []interface{}) (string, error) {
 	if len(result) == 0 {
-		return common.Address{}, ErrNoResult
+		return "", ErrNoResult
 	}
 	if adr, ok := result[0].(common.Address); ok {
-		return adr, nil
+		return adr.Hex(), nil
 	}
-	return common.Address{}, ErrInvalidResult
+	return "", ErrInvalidResult
 }
 
 func fetchTokenURI(uri string) ([]byte, error) {

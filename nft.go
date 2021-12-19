@@ -1,4 +1,4 @@
-package standard
+package gnft
 
 type NFT interface {
 	ERC721
