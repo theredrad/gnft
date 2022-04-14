@@ -5,5 +5,5 @@ import (
 )
 
 type Provider interface {
-	NewContract(address common.Address) NFT
+	NewERC721Contract(address common.Address) NFT721
 }
