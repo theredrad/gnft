@@ -1,6 +1,6 @@
 package gnft
 
-type NFT interface {
+type NFT721 interface {
 	ERC721
 	ERC721Metadata
 	ERC721TokenReceiver
